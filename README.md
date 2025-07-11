@@ -26,7 +26,7 @@
 <table>
   <thead>
     <tr>
-      <th>Node Name</th>
+      <th>Node</th>
       <th>역할(Role)</th>
       <th>MGMT IP</th>
       <th>K8S IP</th>
@@ -156,7 +156,7 @@
 <table>
   <thead>
     <tr>
-      <th>Node Name</th>
+      <th>Node</th>
       <th>역할(Role)</th>
       <th>MGMT IP</th>
       <th>K8S IP</th>
