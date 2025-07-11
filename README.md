@@ -32,7 +32,6 @@
       <th>K8S IP</th>
       <th>K8S Version</th>
       <th>OS-Image</th>
-      <th>Kernel Version</th>
       <th>Container Runtime</th>
     </tr>
   </thead>
@@ -44,7 +43,6 @@
       <td>10.197.64.9</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-62-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -54,7 +52,6 @@
       <td>10.197.64.10</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-53-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -64,7 +61,6 @@
       <td>10.197.64.11</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-62-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -74,7 +70,6 @@
       <td>10.197.64.12</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -84,7 +79,6 @@
       <td>10.197.64.13</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -94,7 +88,6 @@
       <td>10.197.64.14</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -104,7 +97,6 @@
       <td>10.197.64.15</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -114,7 +106,6 @@
       <td>10.197.64.16</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -124,7 +115,6 @@
       <td>10.197.64.17</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -134,7 +124,6 @@
       <td>10.197.64.18</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
     <tr>
@@ -144,7 +133,6 @@
       <td>10.197.64.19</td>
       <td>v1.33.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
     </tr>
   </tbody>
@@ -162,7 +150,6 @@
       <th>K8S IP</th>
       <th>K8S Version</th>
       <th>OS-Image</th>
-      <th>Kernel Version</th>
       <th>Container Runtime</th>
     </tr>
   </thead>
@@ -174,7 +161,6 @@
       <td>10.34.48.100</td>
       <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-59-generic</td>
       <td>containerd://2.0.3</td>
     </tr>
     <tr>
@@ -184,7 +170,6 @@
       <td>10.34.48.101</td>
       <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-63-generic</td>
       <td>containerd://2.0.3</td>
     </tr>
     <tr>
@@ -194,7 +179,6 @@
       <td>10.34.48.102</td>
       <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-53-generic</td>
       <td>containerd://2.0.3</td>
     </tr>
     <tr>
@@ -204,7 +188,6 @@
       <td>10.34.48.103</td>
       <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
-      <td>6.8.0-55-generic</td>
       <td>containerd://2.0.3</td>
     </tr>
   </tbody>
