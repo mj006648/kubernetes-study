@@ -21,7 +21,6 @@
 
 아래는 실제 실습/운영 중인 Kubernetes 클러스터의 노드 정보 예시입니다.
 
-<details>
 <summary><b>TwinX 클러스터</b></summary>
 
 <table>
