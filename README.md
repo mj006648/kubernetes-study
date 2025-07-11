@@ -22,126 +22,124 @@
 아래는 실제 실습/운영 중인 Kubernetes 클러스터의 노드 정보 예시입니다.
 
 <details>
-<summary><b>클러스터1 (GPU/HA)</b></summary>
+<summary><b>TwinX 클러스터</b></summary>
 
 <table>
   <thead>
     <tr>
       <th>Node Name</th>
       <th>역할(Role)</th>
-      <th>CPU</th>
-      <th>Memory</th>
       <th>MGMT IP</th>
       <th>K8S IP</th>
-      <th>DATA IP</th>
+      <th>OS-Image</th>
+      <th>Kernel Version</th>
+      <th>Container Runtime</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>control1</td>
       <td>control-plane</td>
-      <td>4-CORE</td>
-      <td>32GB</td>
       <td>10.38.38.8</td>
       <td>10.197.64.9</td>
-      <td>-</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.8.0-62-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>control2</td>
       <td>control-plane</td>
-      <td>6-CORE</td>
-      <td>32GB</td>
       <td>10.38.38.16</td>
       <td>10.197.64.10</td>
-      <td>-</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.8.0-53-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>control3</td>
       <td>control-plane</td>
-      <td>4-CORE</td>
-      <td>32GB</td>
       <td>10.38.38.24</td>
       <td>10.197.64.11</td>
-      <td>-</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.8.0-62-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>edgebox1</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>128GB</td>
       <td>10.38.38.56</td>
       <td>10.197.64.12</td>
-      <td>10.197.64.129</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.11.0-26-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>edgebox2</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>32GB</td>
       <td>10.38.38.64</td>
       <td>10.197.64.13</td>
-      <td>10.197.64.130</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.11.0-26-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>edgebox3</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>128GB</td>
       <td>10.38.38.72</td>
       <td>10.197.64.14</td>
-      <td>10.197.64.131</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.11.0-26-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>edgebox4</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>128GB</td>
       <td>10.38.38.80</td>
       <td>10.197.64.15</td>
-      <td>10.197.64.132</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>6.11.0-26-generic</td>
+      <td>containerd://2.0.5</td>
     </tr>
     <tr>
       <td>SV4000-1</td>
       <td>worker</td>
-      <td>16-CORE</td>
-      <td>256GB</td>
       <td>10.38.38.32</td>
       <td>10.197.64.16</td>
-      <td>10.197.64.133</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>-</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>SV4000-2</td>
       <td>worker</td>
-      <td>16-CORE</td>
-      <td>256GB</td>
       <td>10.38.38.40</td>
       <td>10.197.64.17</td>
-      <td>10.197.64.134</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>-</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>RM352-1</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>64GB</td>
       <td>10.38.38.88</td>
       <td>10.197.64.18</td>
-      <td>10.197.64.135</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>-</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>RM352-2</td>
       <td>worker</td>
-      <td>12-CORE</td>
-      <td>64GB</td>
       <td>10.38.38.48</td>
       <td>10.197.64.19</td>
-      <td>10.197.64.136</td>
+      <td>Ubuntu 24.04.2 LTS</td>
+      <td>-</td>
+      <td>-</td>
     </tr>
   </tbody>
 </table>
 
-</details>
 
-<details>
 <summary><b>클러스터2 (MiniX)</b></summary>
 
 <table>
