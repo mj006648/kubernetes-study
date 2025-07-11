@@ -116,8 +116,6 @@
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
-      <td>-</td>
-      <td>-</td>
     </tr>
     <tr>
       <td>SV4000-2</td>
@@ -128,8 +126,6 @@
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
-      <td>-</td>
-      <td>-</td>
     </tr>
     <tr>
       <td>RM352-1</td>
@@ -140,8 +136,6 @@
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
-      <td>-</td>
-      <td>-</td>
     </tr>
     <tr>
       <td>RM352-2</td>
@@ -152,8 +146,6 @@
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.11.0-26-generic</td>
       <td>containerd://2.0.5</td>
-      <td>-</td>
-      <td>-</td>
     </tr>
   </tbody>
 </table>
