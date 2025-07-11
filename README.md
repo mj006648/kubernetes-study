@@ -212,7 +212,7 @@
 
 ---
 
-## [📖 활용법 및 참고](pplx://action/followup)
+## [📖 활용법 및 참고]
 
 - 각 폴더의 README/실습.md 파일에서 상세 실습/설정/트러블슈팅 과정을 확인할 수 있습니다.
 - 실습 환경, 버전, 시행착오, 개선점 등도 함께 기록해 두었습니다.
@@ -220,7 +220,7 @@
 
 ---
 
-## [🙌 Contributing & Contact](pplx://action/followup)
+## [🙌 Contributing & Contact]
 
 - 실습 경험, 트러블슈팅, 개선 제안, 질문 등 언제든 환영합니다!
 - Issue, PR, Discussions를 통해 자유롭게 참여해 주세요.
