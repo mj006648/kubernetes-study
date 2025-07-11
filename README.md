@@ -2,7 +2,7 @@
 
 ## 👋 Welcome!
 
-이 저장소는 Kubernetes 기반 인프라 실습, 오픈소스 도구 활용, 운영 트러블슈팅, 그리고 실전 배포 경험을 한 곳에 모으기 위해 만들어졌습니다.
+이 레포는 Kubernetes 기반 인프라 실습, 오픈소스 도구 활용, 운영 트러블슈팅, 그리고 실전 배포 경험을 한 곳에 모으기 위해 만들어졌습니다.
 실습 환경, 인프라 자동화, GitOps, 고가용성(HA) 구성, 운영 노하우, 문제 해결 경험까지 모두 기록합니다.
 
 ---
@@ -21,7 +21,7 @@
 
 아래는 실제 실습/운영 중인 Kubernetes 클러스터의 노드 정보 예시입니다.
 
-<summary><b>TwinX 클러스터</b></summary>
+<summary><b>TwinX Cluster</b></summary>
 
 <table>
   <thead>
@@ -151,14 +151,16 @@
 </table>
 
 
-<summary><b>클러스터2 (MiniX)</b></summary>
+<summary><b>MiniX Cluster</b></summary>
 
 <table>
   <thead>
     <tr>
       <th>Node Name</th>
       <th>역할(Role)</th>
-      <th>Internal IP</th>
+      <th>MGMT IP</th>
+      <th>K8S IP</th>
+      <th>K8S Version</th>
       <th>OS-Image</th>
       <th>Kernel Version</th>
       <th>Container Runtime</th>
@@ -169,6 +171,8 @@
       <td>com1</td>
       <td>control-plane</td>
       <td>10.34.48.100</td>
+      <td>10.34.48.100</td>
+      <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.8.0-59-generic</td>
       <td>containerd://2.0.3</td>
@@ -177,6 +181,8 @@
       <td>com2</td>
       <td>worker1</td>
       <td>10.34.48.101</td>
+      <td>10.34.48.101</td>
+      <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.8.0-63-generic</td>
       <td>containerd://2.0.3</td>
@@ -185,6 +191,8 @@
       <td>com3</td>
       <td>worker2</td>
       <td>10.34.48.102</td>
+      <td>10.34.48.102</td>
+      <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.8.0-53-generic</td>
       <td>containerd://2.0.3</td>
@@ -193,11 +201,11 @@
       <td>com4</td>
       <td>worker3</td>
       <td>10.34.48.103</td>
+      <td>10.34.48.103</td>
+      <td>v1.32.2</td>
       <td>Ubuntu 24.04.2 LTS</td>
       <td>6.8.0-55-generic</td>
       <td>containerd://2.0.3</td>
     </tr>
   </tbody>
 </table>
-
-</details>
