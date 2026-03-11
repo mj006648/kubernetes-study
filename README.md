@@ -203,7 +203,7 @@
 
 ---
 
-## [🙌 Contributing & Contact]
+## [Contributing & Contact]
 
 - 실습 경험, 트러블슈팅, 개선 제안, 질문 등 언제든 환영합니다!
 - Issue, PR, Discussions를 통해 자유롭게 참여해 주세요.
