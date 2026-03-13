@@ -1,210 +1,58 @@
----
+# Kubernetes Study Reference
 
-##  Welcome!
+본 저장소는 쿠버네티스 핵심 개념, 실무 인프라 구축, 그리고 운영 트러블슈팅 경험을 기록하는 전문 학습 레퍼런스입니다. 공식 문서를 바탕으로 한 심층 가이드와 실제 운영 중인 클러스터 정보를 포함하고 있습니다.
 
-이 레포는 Kubernetes 기반 인프라 실습, 오픈소스 도구 활용, 운영 트러블슈팅, 그리고 실전 배포 경험을 한 곳에 모으기 위해 만들어졌습니다.
-실습 환경, 인프라 자동화, GitOps, 고가용성(HA) 구성, 운영 노하우, 문제 해결 경험까지 모두 기록합니다.
+## Repository Structure
 
----
+현재 이 저장소는 다음과 같은 구조로 운영되고 있습니다.
 
-##  Repository Structure
+- **/docs/** : 쿠버네티스 핵심 오브젝트 및 최신 기능에 대한 심층 기술 가이드
+- **/planned/** : (진행 예정) Kubespray, kube-vip, GitOps(ArgoCD) 등 실습 설정 파일
 
-- `/kubespray/` : Kubespray를 활용한 클러스터 자동화 배포 실습
-- `/kube-vip/` : kube-vip를 통한 Control Plane 고가용성(VIP) 구성
-- `/kubeadm/` : kubeadm 기반 클러스터 설치 및 관리
-- `/gitops/` : ArgoCD, Flux 등 GitOps 실습 및 선언적 배포 사례
-- `/docs/` : 공통 개념, 운영 노트, 트러블슈팅, 비교 분석 등
+## Kubernetes Deep-Dive Guides
 
----
+실무에서 가장 중요하게 다루어지는 핵심 기능들에 대한 상세 가이드입니다. 각 문서에는 상세한 개념 설명과 바로 사용 가능한 실전 YAML 예시가 포함되어 있습니다.
 
-##  Cluster Info
+- **[ServiceAccount 및 RBAC 심층 가이드](docs/ServiceAccount.md)**: 클러스터 보안의 기초인 신원 증명과 정밀한 권한 제어 방법
+- **[Gateway API 정밀 가이드](docs/GatewayAPI.md)**: Ingress를 대체하는 차세대 서비스 네트워킹 표준 및 역할 기반 설정
+- **[Persistent Volumes (PV/PVC) 정밀 가이드](docs/PersistentVolumes.md)**: 데이터 영속성 보장을 위한 스토리지 추상화 및 동적 할당 실무
+- **[Dynamic Resource Allocation (DRA) 정밀 가이드](docs/DynamicResourceAllocation.md)**: GPU 등 고성능 하드웨어를 세밀하게 할당하는 최신 리소스 모델
 
-아래는 실제 실습/운영 중인 Kubernetes 클러스터의 노드 정보 예시입니다.
+## Cluster Information
 
-<summary><b>TwinX Cluster</b></summary>
+아래는 현재 학습 및 운영 환경으로 활용 중인 클러스터의 상세 정보입니다.
 
-<table>
-  <thead>
-    <tr>
-      <th>Node</th>
-      <th>역할(Role)</th>
-      <th>MGMT IP</th>
-      <th>K8S IP</th>
-      <th>K8S Version</th>
-      <th>OS-Image</th>
-      <th>Container Runtime</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>control1</td>
-      <td>control-plane</td>
-      <td>10.38.38.8</td>
-      <td>10.197.64.9</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>control2</td>
-      <td>control-plane</td>
-      <td>10.38.38.16</td>
-      <td>10.197.64.10</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>control3</td>
-      <td>control-plane</td>
-      <td>10.38.38.24</td>
-      <td>10.197.64.11</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>edgebox1</td>
-      <td>worker</td>
-      <td>10.38.38.56</td>
-      <td>10.197.64.12</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>edgebox2</td>
-      <td>worker</td>
-      <td>10.38.38.64</td>
-      <td>10.197.64.13</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>edgebox3</td>
-      <td>worker</td>
-      <td>10.38.38.72</td>
-      <td>10.197.64.14</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>edgebox4</td>
-      <td>worker</td>
-      <td>10.38.38.80</td>
-      <td>10.197.64.15</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>SV4000-1</td>
-      <td>worker</td>
-      <td>10.38.38.32</td>
-      <td>10.197.64.16</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>SV4000-2</td>
-      <td>worker</td>
-      <td>10.38.38.40</td>
-      <td>10.197.64.17</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>RM352-1</td>
-      <td>worker</td>
-      <td>10.38.38.88</td>
-      <td>10.197.64.18</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-    <tr>
-      <td>RM352-2</td>
-      <td>worker</td>
-      <td>10.38.38.48</td>
-      <td>10.197.64.19</td>
-      <td>v1.33.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.5</td>
-    </tr>
-  </tbody>
-</table>
+### TwinX Cluster
+본 클러스터는 고가용성(HA) 환경으로 구성된 메인 실습 환경입니다.
 
+| Node | 역할(Role) | MGMT IP | K8S IP | K8S Version | OS-Image | Container Runtime |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| control1 | control-plane | 10.38.38.8 | 10.197.64.9 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| control2 | control-plane | 10.38.38.16 | 10.197.64.10 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| control3 | control-plane | 10.38.38.24 | 10.197.64.11 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| edgebox1 | worker | 10.38.38.56 | 10.197.64.12 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| edgebox2 | worker | 10.38.38.64 | 10.197.64.13 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| edgebox3 | worker | 10.38.38.72 | 10.197.64.14 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| edgebox4 | worker | 10.38.38.80 | 10.197.64.15 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| SV4000-1 | worker | 10.38.38.32 | 10.197.64.16 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| SV4000-2 | worker | 10.38.38.40 | 10.197.64.17 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| RM352-1 | worker | 10.38.38.88 | 10.197.64.18 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
+| RM352-2 | worker | 10.38.38.48 | 10.197.64.19 | v1.33.2 | Ubuntu 24.04.2 | containerd://2.0.5 |
 
-<summary><b>MiniX Cluster</b></summary>
+### MiniX Cluster
+가벼운 테스트 및 엣지 컴퓨팅 시뮬레이션을 위한 서브 클러스터입니다.
 
-<table>
-  <thead>
-    <tr>
-      <th>Node</th>
-      <th>역할(Role)</th>
-      <th>MGMT IP</th>
-      <th>K8S IP</th>
-      <th>K8S Version</th>
-      <th>OS-Image</th>
-      <th>Container Runtime</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>com1</td>
-      <td>control-plane</td>
-      <td>10.34.48.100</td>
-      <td>10.34.48.100</td>
-      <td>v1.32.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.3</td>
-    </tr>
-    <tr>
-      <td>com2</td>
-      <td>worker1</td>
-      <td>10.34.48.101</td>
-      <td>10.34.48.101</td>
-      <td>v1.32.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.3</td>
-    </tr>
-    <tr>
-      <td>com3</td>
-      <td>worker2</td>
-      <td>10.34.48.102</td>
-      <td>10.34.48.102</td>
-      <td>v1.32.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.3</td>
-    </tr>
-    <tr>
-      <td>com4</td>
-      <td>worker3</td>
-      <td>10.34.48.103</td>
-      <td>10.34.48.103</td>
-      <td>v1.32.2</td>
-      <td>Ubuntu 24.04.2 LTS</td>
-      <td>containerd://2.0.3</td>
-    </tr>
-  </tbody>
-</table>
+| Node | 역할(Role) | MGMT IP | K8S IP | K8S Version | OS-Image | Container Runtime |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| com1 | control-plane | 10.34.48.100 | 10.34.48.100 | v1.32.2 | Ubuntu 24.04.2 | containerd://2.0.3 |
+| com2 | worker1 | 10.34.48.101 | 10.34.48.101 | v1.32.2 | Ubuntu 24.04.2 | containerd://2.0.3 |
+| com3 | worker2 | 10.34.48.102 | 10.34.48.102 | v1.32.2 | Ubuntu 24.04.2 | containerd://2.0.3 |
+| com4 | worker3 | 10.34.48.103 | 10.34.48.103 | v1.32.2 | Ubuntu 24.04.2 | containerd://2.0.3 |
+
+## Usage and Contributing
+
+- 각 문서의 상세 내용은 해당 마크다운 파일 링크를 통해 확인하실 수 있습니다.
+- 실전 운영 경험이나 트러블슈팅 사례, 개선 제안은 언제든 Issue나 PR을 통해 환영합니다.
 
 ---
-
-## [활용법 및 참고]
-
-- 각 폴더의 README/실습.md 파일에서 상세 실습/설정/트러블슈팅 과정을 확인할 수 있습니다.
-- 실습 환경, 버전, 시행착오, 개선점 등도 함께 기록해 두었습니다.
-- 실전 운영/학습, 포트폴리오, 팀 내 공유 자료로 활용 가능합니다.
-
----
-
-## [Contributing & Contact]
-
-- 실습 경험, 트러블슈팅, 개선 제안, 질문 등 언제든 환영합니다!
-- Issue, PR, Discussions를 통해 자유롭게 참여해 주세요.
-
+*Maintained by [mj006648](https://github.com/mj006648)*
