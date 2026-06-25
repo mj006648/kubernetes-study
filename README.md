@@ -17,7 +17,7 @@
 - **[Gateway API 정밀 가이드](docs/GatewayAPI.md)**: Ingress를 대체하는 차세대 서비스 네트워킹 표준 및 역할 기반 설정
 - **[Persistent Volumes (PV/PVC) 정밀 가이드](docs/PersistentVolumes.md)**: 데이터 영속성 보장을 위한 스토리지 추상화 및 동적 할당 실무
 - **[Dynamic Resource Allocation (DRA) 정밀 가이드](docs/DynamicResourceAllocation.md)**: GPU 등 고성능 하드웨어를 세밀하게 할당하는 최신 리소스 모델
-- **[TwinX Kubernetes 1.35 업그레이드 계획](docs/TwinX-Kubernetes-Upgrade-Plan.md)**: Kubespray 기반 1.35.4 업그레이드, Hubble, DRA 준비 계획
+- **[TwinX Kubernetes 1.35 업그레이드 계획](docs/TwinX-Kubernetes-Upgrade-Plan.md)**: Kubespray 기반 1.35.4 업그레이드, Hubble, DRA, 노드별 drain/PDB/Rook-Ceph/Partridge 전용 노드 전략
 
 ## Cluster Information
 

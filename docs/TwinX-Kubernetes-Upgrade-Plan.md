@@ -180,3 +180,130 @@ NVIDIA DRA Driver 관점에서 현재 긍정적인 조건:
 - Kubernetes DRA docs: https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/
 - NVIDIA DRA Driver for GPUs: https://dra-driver-nvidia-gpu.sigs.k8s.io/docs/
 - Cilium upgrade guide: https://docs.cilium.io/en/stable/operations/upgrade/
+
+## 8. TwinX 노드별 drain 전략
+
+2026-06-25 읽기 전용 점검 기준, TwinX는 일반적인 전체 `drain=true` 전략을 그대로 적용하기 어렵다. Rook-Ceph, DB, OpenSearch, Redis 같은 stateful workload와 PDB가 일부 노드에 집중되어 있기 때문이다.
+
+현재 Ceph 상태도 `HEALTH_OK`가 아니라 `HEALTH_WARN`이다.
+
+```text
+health: HEALTH_WARN
+mons d,e,f are using a lot of disk space
+mon f is low on available space
+Reduced data availability: 33 pgs inactive
+Degraded data redundancy: 33 pgs undersized
+```
+
+따라서 `drain_nodes: false`는 전체 기본값이 아니라 **Ceph-heavy 노드에 대한 예외 우회책**으로만 사용한다. 특히 `sv4000-1`과 `l40s`는 Ceph health 경고를 먼저 줄인 뒤 마지막에 별도 작업으로 처리한다.
+
+| Node | 주요 상태 | 권장 전략 |
+| --- | --- | --- |
+| `control1` | control-plane, PDB allowed=1 workload 있음 | `drain=true`, control-plane 한 대씩 순차 진행 |
+| `control2` | control-plane, Rook CSI provisioner pod 있음 | 기본 `drain=true`, 막히면 원인 확인 후 예외 처리 |
+| `control3` | control-plane, hard PDB 없음 | `drain=true`, control-plane 한 대씩 순차 진행 |
+| `edgebox1~4` | T4 GPU node, 이미 `SchedulingDisabled`, non-DS pod 적음 | GPU job 확인 후 `drain=true` 가능성이 높음 |
+| `rm352-1` | A10 GPU node, hard PDB 없음 | 표준 `drain=true` rolling upgrade |
+| `rm352-2` | A10 GPU node, PDB allowed=1 workload 있음 | 표준 `drain=true`, drain 실패 시 해당 PDB 확인 |
+| `sv4000-2` | A100 GPU node, Partridge 전용 label/taint, Kyverno로 `partridge` namespace pod 고정 | **Partridge 전용 노드. 서비스 영향 공지 후 처리. 대체 전용 노드가 없으면 drain 시 Partridge pod는 Pending/중단 가능** |
+| `l40s` | OSD 3개, MON/MGR, keycloak-db primary, nessiedb primary, redis master | **Ceph/DB-heavy 노드. Ceph WARN 해소 후 마지막에 처리. drain 실패 시 `drain_nodes=false` 예외 고려** |
+| `sv4000-1` | MON 2개, MDS, RGW, Rook operator/tools, 많은 Trident pod, Ubuntu 22.04.4 | **가장 위험한 노드. OS 업그레이드와 K8s 업그레이드 분리. Ceph WARN 해소 후 별도 작업. 필요 시 `drain_nodes=false` 예외** |
+
+### 권장 실행 순서
+
+```text
+0. 사전 점검
+   - etcd snapshot
+   - Kubespray inventory backup
+   - Ceph status / PDB / workload 분포 확인
+
+1. control-plane
+   - control1 -> control2 -> control3
+   - 기본 drain=true
+   - 한 대씩 진행
+
+2. 가벼운 GPU/worker 노드
+   - edgebox1~4
+   - rm352-1
+   - rm352-2
+   - 기본 drain=true
+
+3. Partridge 전용 노드 별도 처리
+   - sv4000-2
+   - `twinx.dreamai.kr/dedicated-node=partridge` label/taint가 있는 유일한 노드
+   - Kyverno `inject-partridge-node-selector` 정책이 partridge namespace pod를 이 노드로 고정
+   - Partridge 작업자 중단 가능성을 공지하고, 필요하면 대체 노드에 동일 label/taint를 준비한 뒤 진행
+   - 대체 노드가 없으면 `drain=true` 시 Partridge pod는 evict 후 sv4000-2가 uncordon될 때까지 Pending 가능
+   - 짧은 kubelet 업그레이드만 하고 Partridge 중단을 피해야 하면 `drain_nodes=false` 예외를 검토하되, reboot/runtime/CNI 변경과는 묶지 않음
+
+4. Ceph-heavy 노드 별도 처리
+   - l40s
+   - sv4000-1
+   - Ceph HEALTH_WARN 원인 완화 후 진행
+   - reboot, OS upgrade, containerd upgrade, Cilium major/minor upgrade와 동시에 묶지 않음
+   - drain이 PDB/Rook-Ceph 때문에 막힐 경우에만 drain_nodes=false 예외 사용
+```
+
+### `drain_nodes=false` 사용 기준
+
+사용 가능 조건:
+
+- Kubernetes 컴포넌트 업그레이드만 수행
+- 노드 reboot 없음
+- OS/kernel/containerd 변경 없음
+- Cilium 버전 점프 없음
+- Ceph 상태가 최소한 악화되지 않음
+- 한 번에 한 노드만 진행
+
+사용 금지 또는 보류 조건:
+
+- Ceph `HEALTH_ERR`
+- inactive/undersized PG가 증가 중
+- monitor quorum 불안정
+- OSD down/out 발생
+- 노드 reboot 필요
+- Cilium 1.17 → 1.19 같은 네트워크 플러그인 점프를 동시에 수행
+- GPU driver/operator 변경을 동시에 수행
+
+즉, TwinX에서는 다음 원칙을 따른다.
+
+```text
+기본값: drain_nodes=true
+예외: l40s/sv4000-1 같은 Ceph-heavy 노드에서 drain이 PDB 때문에 막힐 때만 drain_nodes=false 고려
+금지: 전체 클러스터를 drain_nodes=false로 일괄 업그레이드
+```
+
+### `sv4000-2` Partridge 전용 노드 주의사항
+
+`sv4000-2`는 일반 A100 worker가 아니라 Partridge 전용 노드로 운영 중이다.
+
+확인된 상태:
+
+```text
+node label: twinx.dreamai.kr/dedicated-node=partridge
+node taint: twinx.dreamai.kr/dedicated-node=partridge:NoSchedule
+Kyverno policy: inject-partridge-node-selector
+Partridge labeled node: sv4000-2 단일 노드
+```
+
+Kyverno 정책은 `partridge` namespace의 pod에 다음 스케줄링 조건을 주입한다.
+
+```yaml
+nodeSelector:
+  twinx.dreamai.kr/dedicated-node: partridge
+tolerations:
+  - key: twinx.dreamai.kr/dedicated-node
+    operator: Equal
+    value: partridge
+    effect: NoSchedule
+```
+
+따라서 `sv4000-2`를 drain하면 Partridge pod는 다른 일반 GPU 노드로 이동하지 않는다. 대체로 다음 중 하나를 선택해야 한다.
+
+| 선택지 | 의미 | 권장 상황 |
+| --- | --- | --- |
+| `drain=true` | Partridge pod를 정상 eviction. 대체 partridge 노드가 없으면 일시 중단/Pending 가능 | 서비스 중단 공지가 가능할 때 |
+| 대체 노드 준비 | 다른 GPU 노드에 동일 label/taint를 임시 부여해 Partridge를 이동 가능하게 함 | Partridge 무중단 또는 짧은 중단이 필요할 때 |
+| `drain_nodes=false` | pod를 evict하지 않고 kubelet 업그레이드만 시도 | reboot/runtime/CNI 변경이 없고 아주 짧은 영향만 허용할 때 |
+
+현재 Partridge pod는 `1/2 Running` 상태로 보이므로, 업그레이드 전에는 애플리케이션 소유자와 현재 정상 동작 기준을 먼저 확인한다.
