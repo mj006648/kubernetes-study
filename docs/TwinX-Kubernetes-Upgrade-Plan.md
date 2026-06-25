@@ -307,3 +307,82 @@ tolerations:
 | `drain_nodes=false` | pod를 evict하지 않고 kubelet 업그레이드만 시도 | reboot/runtime/CNI 변경이 없고 아주 짧은 영향만 허용할 때 |
 
 현재 Partridge pod는 `1/2 Running` 상태로 보이므로, 업그레이드 전에는 애플리케이션 소유자와 현재 정상 동작 기준을 먼저 확인한다.
+
+## 9. 추가 preflight: rm352 Cilium 이력과 control-plane OTP
+
+### rm352-1 / rm352-2 Cilium 통신 이력
+
+과거 `rm352-1`, `rm352-2`에서 Cilium 관련 문제로 pod-to-node 또는 node 통신이 깨진 이력이 있다. 현재 읽기 전용 점검에서는 두 노드의 Cilium agent와 Cilium health가 정상으로 보인다.
+
+현재 확인 결과:
+
+```text
+rm352-1 cilium status: OK
+rm352-2 cilium status: OK
+cilium-health: 12/12 reachable
+routing-mode: tunnel
+ tunnel-protocol: vxlan
+kube-proxy-replacement: false
+```
+
+하지만 과거 장애 이력이 있으므로 `rm352-1`, `rm352-2`는 일반 worker이지만 다음 검증을 반드시 전후로 수행한다.
+
+업그레이드 전:
+
+```bash
+kubectl -n kube-system exec <rm352-1-cilium-pod> -c cilium-agent -- cilium status --brief
+kubectl -n kube-system exec <rm352-1-cilium-pod> -c cilium-agent -- cilium-health status
+kubectl -n kube-system exec <rm352-2-cilium-pod> -c cilium-agent -- cilium status --brief
+kubectl -n kube-system exec <rm352-2-cilium-pod> -c cilium-agent -- cilium-health status
+kubectl -n kube-system get pods -o wide | grep -E 'rm352-1|rm352-2|cilium'
+```
+
+업그레이드 후:
+
+```bash
+kubectl -n kube-system rollout status ds/cilium
+kubectl -n kube-system exec <rm352-1-cilium-pod> -c cilium-agent -- cilium-health status
+kubectl -n kube-system exec <rm352-2-cilium-pod> -c cilium-agent -- cilium-health status
+kubectl get nodes rm352-1 rm352-2 -o wide
+kubectl get pods -A -o wide | grep -E 'rm352-1|rm352-2'
+```
+
+가능하면 실제 workload 기준으로 다음도 확인한다.
+
+- rm352 위 pod에서 Kubernetes API 접근 가능 여부
+- rm352 위 pod에서 node IP 접근 가능 여부
+- 다른 노드 pod에서 rm352 위 pod 접근 가능 여부
+- rm352 위 pod에서 ClusterIP 서비스 접근 가능 여부
+
+중단 기준:
+
+```text
+rm352 중 하나라도 cilium-health가 12/12 reachable이 아니면 다음 노드로 진행하지 않는다.
+Pod -> Node 통신이 다시 깨지면 Cilium/Hubble/DRA 작업은 중단하고 네트워크 복구를 우선한다.
+```
+
+### control-plane SSH OTP / Google Authenticator
+
+control-plane 노드에 Google OTP 기반 SSH 2FA가 걸려 있으면 Kubespray/Ansible 자동화가 중간에 멈출 수 있다. Kubespray는 여러 노드에 반복 SSH 접속하므로, 작업 시간 동안 Ansible 실행 계정은 **비대화형 SSH 접속**이 가능해야 한다.
+
+권장 방식:
+
+1. 작업 전 control-plane 3대에 대해 Ansible 계정 SSH 접속 테스트
+2. 작업 시간 동안만 Ansible 실행 계정의 OTP 요구를 비활성화하거나, OTP가 적용되지 않는 별도 자동화용 SSH key 경로 사용
+3. root/sudo 권한이 password/OTP prompt 없이 동작하는지 확인
+4. 작업 종료 후 OTP 정책 원복
+
+사전 확인 예시:
+
+```bash
+ansible -i inventory/mycluster/inventory.ini kube_control_plane -m ping
+ansible -i inventory/mycluster/inventory.ini kube_node -m ping
+ansible -i inventory/mycluster/inventory.ini all -m command -a 'sudo -n true'
+```
+
+주의:
+
+```text
+OTP가 남아 있으면 업그레이드 도중 특정 control-plane에서 Ansible이 멈출 수 있다.
+OTP를 해제하더라도 작업창 동안만 적용하고, 완료 후 반드시 원복한다.
+```
