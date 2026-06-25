@@ -2,10 +2,13 @@
 
 > 작성일: 2026-06-25  
 > 상태: 계획 문서. 실제 업그레이드, 재시작, drain, rollout은 아직 수행하지 않음.
+> 최신 점검: 2026-06-25 읽기 전용 클러스터 감사 결과 반영.
 
 이 문서는 TwinX 클러스터를 Kubernetes 1.35 계열로 업그레이드하면서 Hubble 관측 기능과 DRA 기반 GPU 자원 할당 실험을 함께 준비하기 위한 작업 메모이다.
 
 ## 1. 현재 확인된 상태
+
+2026-06-25 기준 감사 스냅샷은 `/tmp/twinx-cluster-audit-20260625073732`에 보관했다. 이 감사에서는 `kubectl get/describe`, Ceph status, Cilium health, ArgoCD 상태 등 읽기 전용 조회만 수행했고 업그레이드, drain, restart, rollout은 수행하지 않았다.
 
 ### Kubernetes
 
@@ -18,6 +21,21 @@
 | OS | 대부분 Ubuntu 24.04.x, `sv4000-1`만 Ubuntu 22.04.4 LTS |
 | Container runtime | containerd 2.1.3 |
 | 특이사항 | `edgebox1~4`는 `SchedulingDisabled` 상태 |
+
+### 2026-06-25 주요 리스크 요약
+
+내일 작업의 기본 판단은 **전체 클러스터 일괄 업그레이드가 아니라, 사전 점검 후 저위험 구간부터 단계적으로 진행**하는 것이다.
+
+| 구분 | 현재 관찰 | 판단 |
+| --- | --- | --- |
+| Rook-Ceph | `HEALTH_WARN`, inactive/undersized PG 33개, replica 없는 pool 18개, OSD 3개 전부 `l40s` | 가장 큰 리스크. `l40s`, `sv4000-1`은 마지막 별도 작업 |
+| Harbor | registry PVC 500Gi RWO가 `rm352-1`에 attach, 새 registry pod는 `l40s`에서 `ContainerCreating` | `rm352-1` drain 전 Harbor 상태 정리 필요 |
+| `l40s` runtime | Grafana/Prometheus/Milvus pod kill 실패, `DeadlineExceeded`, `RST_STREAM` 이벤트 반복 | drain 중 pod 종료가 오래 걸리거나 stuck 가능 |
+| PDB | `keycloak-db-primary`, `nessiedb-primary`, `opensearch` PDB allowed disruptions 0 | stateful workload eviction 실패 가능 |
+| Partridge | `sv4000-2` 단일 전용 label/taint, Partridge pod 모두 `sv4000-2` | drain 시 Partridge 중단/Pending 가능 |
+| Cilium | 현재 v1.17.3, health는 12/12 reachable, Hubble disabled | 현재 통신은 OK. 1.19 계열 점프와 Hubble enable은 분리 권장 |
+| control-plane | kube-apiserver/controller/scheduler는 Running이지만 일부 restart count 높음 | etcd health/snapshot과 비대화형 SSH 확인 후 진행 |
+| Metrics | metrics-server 없음, `kubectl top nodes` 불가 | hard blocker는 아니지만 관측성 부족 |
 
 ### Kubespray
 
@@ -172,6 +190,12 @@ NVIDIA DRA Driver 관점에서 현재 긍정적인 조건:
 - [ ] Hubble relay / metrics only 설정 확정
 - [ ] GPU Operator 및 NVIDIA device plugin 전환 전략 결정
 - [ ] DRA 테스트 대상 GPU 노드 선정
+- [ ] Ceph `HEALTH_WARN` 세부 원인 확인 및 `l40s`/`sv4000-1` 보류 여부 결정
+- [ ] Harbor registry stuck pod와 RWO RBD attachment 상태 확인
+- [ ] `l40s`의 FailedKillPod / containerd 응답 지연 이벤트 재확인
+- [ ] `sv4000-2` Partridge downtime 가능 여부 확인
+- [ ] control-plane SSH OTP 우회/해제 및 작업 후 원복 계획 확정
+- [ ] ArgoCD auto-sync가 업그레이드 중 민감 앱을 건드리지 않는지 확인
 
 ## 7. 참고 링크
 
@@ -203,8 +227,8 @@ Degraded data redundancy: 33 pgs undersized
 | `control2` | control-plane, Rook CSI provisioner pod 있음 | 기본 `drain=true`, 막히면 원인 확인 후 예외 처리 |
 | `control3` | control-plane, hard PDB 없음 | `drain=true`, control-plane 한 대씩 순차 진행 |
 | `edgebox1~4` | T4 GPU node, 이미 `SchedulingDisabled`, non-DS pod 적음 | GPU job 확인 후 `drain=true` 가능성이 높음 |
-| `rm352-1` | A10 GPU node, hard PDB 없음 | 표준 `drain=true` rolling upgrade |
-| `rm352-2` | A10 GPU node, PDB allowed=1 workload 있음 | 표준 `drain=true`, drain 실패 시 해당 PDB 확인 |
+| `rm352-1` | A10 GPU node, Harbor registry 500Gi RWO PVC가 attach된 상태 | **Harbor registry 정리 전 보류.** drain 시 Harbor registry 중단/볼륨 재attach 가능성 확인 |
+| `rm352-2` | A10 GPU node, PDB allowed=1 workload 있음, 과거 Cilium 이슈 이력 | 표준 `drain=true` 후보. 전후 Cilium health와 pod/node 통신 검증 |
 | `sv4000-2` | A100 GPU node, Partridge 전용 label/taint, Kyverno로 `partridge` namespace pod 고정 | **Partridge 전용 노드. 서비스 영향 공지 후 처리. 대체 전용 노드가 없으면 drain 시 Partridge pod는 Pending/중단 가능** |
 | `l40s` | OSD 3개, MON/MGR, keycloak-db primary, nessiedb primary, redis master | **Ceph/DB-heavy 노드. Ceph WARN 해소 후 마지막에 처리. drain 실패 시 `drain_nodes=false` 예외 고려** |
 | `sv4000-1` | MON 2개, MDS, RGW, Rook operator/tools, 많은 Trident pod, Ubuntu 22.04.4 | **가장 위험한 노드. OS 업그레이드와 K8s 업그레이드 분리. Ceph WARN 해소 후 별도 작업. 필요 시 `drain_nodes=false` 예외** |
@@ -224,11 +248,16 @@ Degraded data redundancy: 33 pgs undersized
 
 2. 가벼운 GPU/worker 노드
    - edgebox1~4
-   - rm352-1
    - rm352-2
    - 기본 drain=true
 
-3. Partridge 전용 노드 별도 처리
+3. Harbor 영향 노드
+   - rm352-1
+   - Harbor registry 500Gi RWO PVC attachment 상태 정리 후 진행
+   - registry pod가 안정적으로 한 곳에 떠 있고 stuck pod가 없는지 확인
+   - Harbor가 중요하면 별도 짧은 중단 공지 후 drain
+
+4. Partridge 전용 노드 별도 처리
    - sv4000-2
    - `twinx.dreamai.kr/dedicated-node=partridge` label/taint가 있는 유일한 노드
    - Kyverno `inject-partridge-node-selector` 정책이 partridge namespace pod를 이 노드로 고정
@@ -236,7 +265,7 @@ Degraded data redundancy: 33 pgs undersized
    - 대체 노드가 없으면 `drain=true` 시 Partridge pod는 evict 후 sv4000-2가 uncordon될 때까지 Pending 가능
    - 짧은 kubelet 업그레이드만 하고 Partridge 중단을 피해야 하면 `drain_nodes=false` 예외를 검토하되, reboot/runtime/CNI 변경과는 묶지 않음
 
-4. Ceph-heavy 노드 별도 처리
+5. Ceph-heavy 노드 별도 처리
    - l40s
    - sv4000-1
    - Ceph HEALTH_WARN 원인 완화 후 진행
@@ -386,3 +415,100 @@ ansible -i inventory/mycluster/inventory.ini all -m command -a 'sudo -n true'
 OTP가 남아 있으면 업그레이드 도중 특정 control-plane에서 Ansible이 멈출 수 있다.
 OTP를 해제하더라도 작업창 동안만 적용하고, 완료 후 반드시 원복한다.
 ```
+
+## 10. 2026-06-25 상세 감사 기반 내일 판단
+
+### 결론
+
+내일 바로 `upgrade-cluster.yml`을 전체 노드 대상으로 끝까지 밀어붙이는 방식은 권장하지 않는다. 현재 클러스터에는 업그레이드 자체보다 **drain, storage detach/attach, stateful workload eviction, CNI rollout**에서 걸릴 요소가 많다.
+
+내일 목표는 다음처럼 잡는다.
+
+```text
+1차 목표: 사전 점검 + control-plane + 저위험 worker 일부 안정 업그레이드
+보류 목표: Ceph-heavy 노드, Harbor 영향 노드, Partridge 전용 노드
+추가 목표: Hubble/DRA는 Kubernetes 안정화 이후 별도 적용
+```
+
+### 강한 blocker
+
+| Blocker | 증거 | 내일 대응 |
+| --- | --- | --- |
+| Ceph `HEALTH_WARN` | inactive/undersized PG 33개, replica 없는 pool 18개, OSD 전부 `l40s` | Ceph health 확인 전 `l40s`, `sv4000-1` 작업 금지 |
+| Harbor registry PVC | `habor-harbor-registry` 500Gi RWO PV가 `rm352-1`에 attach, 새 pod는 `l40s`에서 `ContainerCreating` | `rm352-1` drain 전 registry rollout/stuck pod 정리 |
+| `l40s` pod kill 실패 | `FailedKillPod`, `DeadlineExceeded`, `RST_STREAM` 이벤트 반복 | `l40s`는 마지막. 필요 시 containerd/kubelet 상태 별도 점검 |
+| PDB allowed=0 | keycloak DB, Nessie DB, OpenSearch PDB | drain 실패 시 PDB별로 원인 확인, 전역 `drain_nodes=false` 금지 |
+| `sv4000-2` 단일 Partridge 노드 | label/taint가 `sv4000-2`에만 존재, Partridge pod 전부 해당 노드 | 중단 공지 또는 대체 label/taint 노드 준비 후 진행 |
+| control-plane OTP | Ansible 비대화형 SSH가 막힐 수 있음 | 작업 전 OTP 우회/해제, 작업 후 원복 |
+
+### 내일 실제 순서
+
+```text
+0. 변경 금지 상태에서 preflight
+   - ansible ping / sudo -n true
+   - etcd health + snapshot
+   - ceph status / ceph health detail
+   - kubectl get pdb -A
+   - kubectl get pods -A -o wide
+   - kubectl -n kube-system cilium-health 확인
+   - harbor registry pod/PVC/VolumeAttachment 확인
+
+1. 진행 여부 판단
+   - etcd 불안정: upgrade 중단
+   - Ceph HEALTH_ERR 또는 악화: Ceph-heavy 노드 제외
+   - Harbor registry stuck 지속: rm352-1 제외
+   - Cilium health 12/12 미달: Cilium/Hubble/DRA 모두 중단
+
+2. 가능한 경우 control-plane부터 한 대씩
+   - control1 -> control2 -> control3
+   - 각 노드 후 API server, scheduler, controller, Cilium 확인
+
+3. 저위험 worker
+   - edgebox1~4
+   - rm352-2
+   - 각 노드 후 Cilium health와 GPU Operator daemonset 확인
+
+4. 보류 또는 별도 작업
+   - rm352-1: Harbor registry 안정화 후
+   - sv4000-2: Partridge downtime 합의 후
+   - l40s/sv4000-1: Ceph health 정리 후
+```
+
+### 시간 예상
+
+| 범위 | 예상 시간 | 판단 |
+| --- | --- | --- |
+| preflight + 상태 판단 | 1~2시간 | 반드시 필요 |
+| control-plane 3대 | 1~2시간 이상 | etcd/OTP 문제 없을 때 |
+| edgebox/rm352-2 일부 worker | 1~3시간 | drain 상황에 따라 변동 |
+| 전체 노드 완료 | 반나절~하루 이상 | 현재 상태에서는 무리하지 않는 편이 안전 |
+| Ceph/Harbor/Partridge 포함 완전 완료 | 별도 작업창 권장 | 내일 한 번에 묶지 않기 |
+
+### 중단 기준
+
+다음 중 하나라도 발생하면 다음 노드로 진행하지 않는다.
+
+```text
+- etcd endpoint health 실패
+- kube-apiserver 3대 중 2대 이상 불안정
+- Cilium health 12/12 reachable 미달
+- Ceph inactive/undersized PG 증가
+- Harbor registry가 Running 0개가 됨
+- RBD volume detach/attach가 stuck
+- drain이 PDB로 막혔는데 영향 workload 소유자가 불명확함
+- Partridge pod가 의도치 않게 Pending/CrashLoop 상태로 전환
+```
+
+### Hubble / DRA 적용 위치
+
+Hubble과 DRA는 이번 업그레이드의 최종 목표에 포함될 수 있지만, 내일 첫 작업에서는 Kubernetes 안정화보다 앞세우지 않는다.
+
+```text
+Kubernetes 1.35.4 안정화
+→ Cilium 상태 확인
+→ Hubble relay/metrics only enable
+→ DRA API 확인
+→ NVIDIA DRA Driver 테스트 노드 적용
+```
+
+Hubble은 Cilium datapath 변경보다는 낮은 위험이지만, ConfigMap/agent rollout이 생길 수 있다. DRA는 Kubernetes 1.35 이후 API가 보이는지 확인한 뒤 테스트 노드에서만 시작한다.
